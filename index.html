@@ -11,7 +11,8 @@
     <button type="submit">GET</button>
 </form>
 <div id="message"></div>
-分享網址: <input type="text" readonly="readonly" id="share-url" size="90">
+分享網址: <input type="text" readonly="readonly" id="share-url" size="90"><br>
+短網址: <input type="text" readonly="readonly" id="short-url" size="90"><br>
 <div id="wiki-area">
 Wiki Infobox:
 <textarea style="width:100%; height: 300px" id="wiki"></textarea>
@@ -35,6 +36,7 @@ $('#form').submit(function(e){
             var case_word = matches[5];
             var case_no = matches[6];
             $('#share-url').val('http://jirs.judicial.gov.tw/FJUD/FJUDQRY02_1.aspx?cw=1&v_court=' + encodeURIComponent(court_id + ' ' + court[court_id]) + '&v_sys=' + court_type + '&jud_year=' + year + '&jud_case=' + encodeURIComponent(case_word) + '&jud_no=' + case_no + '&jud_title=&keyword=&sdate=19110101&edate=99991231&searchkw=');
+            $('#short-url').val('http://judicial.ronny.tw/' + court_id + '/' + court_type + '/' + year + '/' + encodeURIComponent(case_word) + '/' + case_no);
             $('#message').text('已產生可分享此案件連結，詳細資訊可入內透過友善列印取出');
             return;
         } else if (url.match('/FJUD/PrintFJUD03_0.aspx')) { // 友善列印頁
@@ -64,6 +66,7 @@ $('#form').submit(function(e){
             $('#wiki-area').show();
             $('#wiki').text(to_wiki_infobox(result));
             $('#share-url').val(result["連結"]["列表"]);
+            $('#short-url').val(result["連結"]["列表短網址"]);
         });
 });
 </script>
