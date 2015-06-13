@@ -26,16 +26,31 @@ $('#form').submit(function(e){
         var url = $('#url').val();
         var proxy_url = 'http://proxy.g0v.ronny.tw/proxy.php?url=' + encodeURIComponent(url);
 
-        if (url.match('/FJUD/FJUDQRY03_1.aspx')) { // 單一判決頁
-            var type = 'FJUDQRY03_1';
-        } else if (url.match(/^(.*法院)(刑事|民事|行政訴訟)(判決|裁定)/)) {
-            var map = {'○': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9};
+        if (!url.match('^http')) {
+            var map = {'○': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '　': ''};
             for (var i in map) {
                 url = url.replace(new RegExp(i, 'g'), map[i]);
             }
-            var matches = url.match(/^(.*法院)(刑事|民事|行政訴訟)(判決|裁定).*?([0-9]*)年度(.*)字第([0-9]*)號/);
+        }
+
+        if (url.match('/FJUD/FJUDQRY03_1.aspx')) { // 單一判決頁
+            var type = 'FJUDQRY03_1';
+        } else if (url.match(/^(.*法院)(刑事|民事|行政訴訟)?(判決|裁定)/)) {
+            var matches = url.match(/^(.*法院)(刑事|民事|行政訴訟)?(判決|裁定).*?([0-9]*)年度(.*)字第([0-9]*)號/);
             var court_id = court_name[matches[1]];
+            if ('undefined' === typeof(court_id)) {
+                $('#message').text('找不到這個法院: ' + matches[1]);
+                return;
+            }
             var court_type = getCaseType(matches[2]);
+            if ('undefined' === typeof(court_type)) {
+                if (court_id == 'TPA' || court_id == 'TPB' || court_id == 'TCB' || court_id == 'KSB') {
+                    court_type = 'A';
+                } else {
+                    $('#message').text('找不到判決種類');
+                    return;
+                }
+            }
             var year = parseInt(matches[4], 10);
             var case_word = matches[5];
             var case_no = matches[6];
