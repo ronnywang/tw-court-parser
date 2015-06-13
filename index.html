@@ -11,7 +11,7 @@
     <button type="submit">GET</button>
 </form>
 <div id="message"></div>
-
+分享網址: <input type="text" readonly="readonly" id="share-url">
 <div id="wiki-area">
 Wiki Infobox:
 <textarea style="width:100%; height: 300px" id="wiki"></textarea>
@@ -53,6 +53,7 @@ $('#form').submit(function(e){
             $('#textarea').text(JSON.stringify(result, true, 2));
             $('#wiki-area').show();
             $('#wiki').text(to_wiki_infobox(result));
+            $('#share-url').val(result["連結"]["列表"]);
         });
 });
 </script>
