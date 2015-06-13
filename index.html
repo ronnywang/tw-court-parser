@@ -27,6 +27,16 @@ $('#form').submit(function(e){
 
         if (url.match('/FJUD/FJUDQRY03_1.aspx')) { // 單一判決頁
             var type = 'FJUDQRY03_1';
+        } else if (url.match(/^(.*法院)(刑事|民事|行政訴訟)(判決|裁定)/)) {
+            var matches = url.match(/^(.*法院)(刑事|民事|行政訴訟)(判決|裁定).*?([0-9]*)年度(.*)字第([0-9]*)號/);
+            var court_id = court_name[matches[1]];
+            var court_type = getCaseType(matches[2]);
+            var year = parseInt(matches[4], 10);
+            var case_word = matches[5];
+            var case_no = matches[6];
+            $('#share-url').val('http://jirs.judicial.gov.tw/FJUD/FJUDQRY02_1.aspx?cw=1&v_court=' + encodeURIComponent(court_id + ' ' + court[court_id]) + '&v_sys=' + court_type + '&jud_year=' + year + '&jud_case=' + encodeURIComponent(case_word) + '&jud_no=' + case_no + '&jud_title=&keyword=&sdate=19110101&edate=99991231&searchkw=');
+            $('#message').text('已產生可分享此案件連結，詳細資訊可入內透過友善列印取出');
+            return;
         } else if (url.match('/FJUD/PrintFJUD03_0.aspx')) { // 友善列印頁
             var type = 'PrintFJUD03_0';
         } else if (url.match('/FJUD/HISTORYSELF.aspx')) { // 歷審頁
