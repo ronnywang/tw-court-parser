@@ -36,8 +36,10 @@ $('#form').submit(function(e){
             return;
         }
         
+        $('#message').text('讀取中...');
         $.get(proxy_url, function(text){
             var result;
+            $('#message').text('');
             if ('FJUDQRY03_1' == type) {
                 result = parse_from_page(text);
             } else if ('PrintFJUD03_0' == type) {
