@@ -250,15 +250,25 @@ var parse_body = function(result, body, jcheck){
     var lines = body.split("\n");
     
     // 處理法院
-    var matches = lines[0].match(/^(.*法院)(刑事|民事|行政訴訟)(判決|裁定)/);
+    var matches = lines[0].match(/^(.*法院)(刑事|民事|行政訴訟)?(判決|裁定)/);
     if (matches) {
+        court_id = court_name[matches[1]];
         result['法院'] = {
             SOURCE: matches[1],
             ID: court_name[matches[1]],
         };
+        if (!matches[2]) {
+            if (court_id == 'TPA' || court_id == 'TPB' || court_id == 'TCB' || court_id == 'KSB') {
+                court_type = 'A';
+                court_type_source = '行政訴訟';
+            }
+        } else {
+            court_type = getCaseType(matches[2]);
+            court_type_source = matches[2];
+        }
         result['裁判種類'] = {
-            SOURCE: matches[2],
-            ID: getCaseType(matches[2]),
+            SOURCE: court_type_source,
+            ID: court_type,
         };
         result['裁判類別'] = {
             SOURCE: matches[3],
