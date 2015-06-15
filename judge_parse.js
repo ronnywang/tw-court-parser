@@ -84,10 +84,16 @@ var court_name_map = {};
 var court_names = [];
 for (var id in court) {
     court_name_map[court[id].replace(/ /g, '')] = id;
-    court_names.push(court[id].replace(/ /g, ''));
 }
 court_name_map['臺灣板橋地方法院'] = 'PCD';
-court_names.push('臺灣板橋地方法院');
+court_name_map['司法院刑事補償法庭'] = 'TPC';
+court_name_map['司法院訴願'] = 'TPU';
+court_name_map['臺灣高等法院訴願'] = 'TPH';
+court_name_map['最　高　行　政　法　院'] = 'TPA';
+
+for (var n in court_name_map) {
+    court_names.push(n);
+}
 court_names.sort(function(a, b) { return a.length < b.length ? 1 : -1; });
 
 var getCaseType = function(name) {
@@ -268,17 +274,22 @@ var parse_court = function(str){
     if (court_id === null) {
         throw "找不到對應的法院";
     }
-    var matches = str.substring(name.length).match(/^(刑事|民事|行政訴訟)?(簡易判決|判決|裁定)(.*)/);
-    if (!matches) {
-        console.log(name);
-        console.log(str.substring(name.length));
-        throw "無法判斷是民事、刑事";
-    }
-
-    if (!matches[1]) {
+    var matches = str.substring(name.length).match(/^(刑事|民事|行政訴訟|行政)?(簡易判決|判決|裁定|[^ 　]*)(.*)/);
+    if (!matches || !matches[1]) {
         if (court_id == 'TPA' || court_id == 'TPB' || court_id == 'TCB' || court_id == 'KSB') {
             court_type = 'A';
             court_type_source = '行政訴訟';
+        } else if (court_id == 'TPC') {
+            court_type = 'M';
+            court_type_source = '刑事補償';
+        } else if (court_id == 'TPU' || court_id == 'TPH') {
+            court_type = 'A';
+            court_type_source = '訴願決定書';
+        } else if (court_id == 'TPJ' || court_id == 'TPP') {
+            court_type = 'P';
+            court_type_source = '懲戒';
+        } else {
+            throw "無法判斷是民事、刑事";
         }
     } else {
         court_type = getCaseType(matches[1]);
@@ -293,11 +304,12 @@ var parse_court = function(str){
     };
 
     var year_word = matches[3];
+    year_word = year_word.replace(/ /g, '');
     var map = {'○': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '　': ''};
     for (var i in map) {
         year_word = year_word.replace(new RegExp(i, 'g'), map[i]);
     }
-    var matches = year_word.match(/([0-9]*)年度(.*)字第([0-9]*)號/);
+    var matches = year_word.match(/([0-9]*)年度?(.*)字第([0-9]*)號/);
     if (matches) {
         var year = parseInt(matches[1], 10);
         var case_word = matches[2];

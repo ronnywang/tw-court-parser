@@ -47,6 +47,8 @@ $('#form').submit(function(e){
             url = 'http://judicial.ronny.tw/' + encodeURIComponent(result['法院'].ID) + '/' + result['裁判種類'].ID + '/' + result['裁判字號']['年'] + '/' + encodeURIComponent(result['裁判字號']['字']) + '/' + result['裁判字號']['號'];
             $('#short-url').val(url);
             $('#message').text('已產生可分享此案件連結，詳細資訊可入內透過友善列印取出');
+            $('#textarea').text(JSON.stringify(result, true, 2));
+            $('#wiki-area').hide();
             return;
         } else if (url.match('/FJUD/PrintFJUD03_0.aspx')) { // 友善列印頁
             var type = 'PrintFJUD03_0';
