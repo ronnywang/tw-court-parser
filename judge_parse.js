@@ -80,11 +80,15 @@ var court = {
     'KSY': '臺灣高雄少年及家事法院',
 };
 
-var court_name = {};
+var court_name_map = {};
+var court_names = [];
 for (var id in court) {
-    court_name[court[id]] = id;
+    court_name_map[court[id].replace(/ /g, '')] = id;
+    court_names.push(court[id].replace(/ /g, ''));
 }
-court_name['臺灣板橋地方法院'] = 'PCD';
+court_name_map['臺灣板橋地方法院'] = 'PCD';
+court_names.push('臺灣板橋地方法院');
+court_names.sort(function(a, b) { return a.length < b.length ? 1 : -1; });
 
 var getCaseType = function(name) {
     switch (name) {
@@ -247,37 +251,77 @@ var parse_history = function(html){
     return records;
 };
 
+var parse_court = function(str){
+    var result = {};
+    var court_id = null;
+    for (var i = 0; i < court_names.length; i ++) {
+        name = court_names[i];
+        if (str.indexOf(name) === 0) {
+            court_id = court_name_map[name];
+            result['法院'] = {
+                SOURCE: name,
+                ID: court_name_map[name],
+            };
+            break;
+        }
+    }
+    if (court_id === null) {
+        throw "找不到對應的法院";
+    }
+    var matches = str.substring(name.length).match(/^(刑事|民事|行政訴訟)?(簡易判決|判決|裁定)(.*)/);
+    if (!matches) {
+        console.log(name);
+        console.log(str.substring(name.length));
+        throw "無法判斷是民事、刑事";
+    }
+
+    if (!matches[1]) {
+        if (court_id == 'TPA' || court_id == 'TPB' || court_id == 'TCB' || court_id == 'KSB') {
+            court_type = 'A';
+            court_type_source = '行政訴訟';
+        }
+    } else {
+        court_type = getCaseType(matches[1]);
+        court_type_source = matches[1];
+    }
+    result['裁判種類'] = {
+        SOURCE: court_type_source,
+        ID: court_type,
+    };
+    result['裁判類別'] = {
+        SOURCE: matches[2],
+    };
+
+    var year_word = matches[3];
+    var map = {'○': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '　': ''};
+    for (var i in map) {
+        year_word = year_word.replace(new RegExp(i, 'g'), map[i]);
+    }
+    var matches = year_word.match(/([0-9]*)年度(.*)字第([0-9]*)號/);
+    if (matches) {
+        var year = parseInt(matches[1], 10);
+        var case_word = matches[2];
+        var case_no = matches[3];
+        result['裁判字號'] = {
+            '年': year,
+            '字': case_word,
+            '號': case_no,
+        };
+    }
+
+    return result;
+};
+
 var parse_body = function(result, body, jcheck){
     var lines = body.split("\n");
+    court_result = parse_court(lines[0]);
+    for (var i in court_result) {
+        if (i == '裁判字號') continue;
+        result[i] = court_result[i];
+    }
+    result['裁判類別']['jcheck'] = jcheck;
     
     // 處理法院
-    var matches = lines[0].match(/^(.*法院)(刑事|民事|行政訴訟)?(簡易判決|判決|裁定)/);
-    if (matches) {
-        court_id = court_name[matches[1]];
-        result['法院'] = {
-            SOURCE: matches[1],
-            ID: court_name[matches[1]],
-        };
-        if (!matches[2]) {
-            if (court_id == 'TPA' || court_id == 'TPB' || court_id == 'TCB' || court_id == 'KSB') {
-                court_type = 'A';
-                court_type_source = '行政訴訟';
-            }
-        } else {
-            court_type = getCaseType(matches[2]);
-            court_type_source = matches[2];
-        }
-        result['裁判種類'] = {
-            SOURCE: court_type_source,
-            ID: court_type,
-        };
-        result['裁判類別'] = {
-            SOURCE: matches[3],
-            jcheck: jcheck,
-        };
-    } else {
-        // TODO:公懲?
-    }
     result['連結']['歷審案件'] = 'http://jirs.judicial.gov.tw/FJUD/HISTORYSELF.aspx?selectedOwner=H&selectedCrmyy=' + result['裁判字號']['年'] + '&selectedCrmid=' + encodeURIComponent(result['裁判字號']['字']) + '&selectedCrmno=' + result['裁判字號']['號'] + '&selectedCrtid=' + result['法院'].ID;
     result['連結']['列表'] = 'http://jirs.judicial.gov.tw/FJUD/FJUDQRY02_1.aspx?cw=1&v_court=' + encodeURIComponent(result['法院'].ID + ' ' + court[result['法院'].ID]) + '&v_sys=' + result['裁判種類'].ID + '&jud_year=' + result['裁判字號']['年'] + '&jud_case=' + encodeURIComponent(result['裁判字號']['字']) + '&jud_no=' + result['裁判字號']['號'] + '&jud_title=&keyword=&sdate=19110101&edate=99991231&searchkw=';
     result['連結']['列表短網址'] = 'http://judicial.ronny.tw/' + encodeURIComponent(result['法院'].ID) + '/' + result['裁判種類'].ID + '/' + result['裁判字號']['年'] + '/' + encodeURIComponent(result['裁判字號']['字']) + '/' + result['裁判字號']['號'];
