@@ -84,6 +84,7 @@ var court_name = {};
 for (var id in court) {
     court_name[court[id]] = id;
 }
+court_name['臺灣板橋地方法院'] = 'PCD';
 
 var getCaseType = function(name) {
     switch (name) {
@@ -250,7 +251,7 @@ var parse_body = function(result, body, jcheck){
     var lines = body.split("\n");
     
     // 處理法院
-    var matches = lines[0].match(/^(.*法院)(刑事|民事|行政訴訟)?(判決|裁定)/);
+    var matches = lines[0].match(/^(.*法院)(刑事|民事|行政訴訟)?(簡易判決|判決|裁定)/);
     if (matches) {
         court_id = court_name[matches[1]];
         result['法院'] = {
