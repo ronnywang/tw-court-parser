@@ -313,6 +313,12 @@ var parse_court = function(str){
     if (matches) {
         var year = parseInt(matches[1], 10);
         var case_word = matches[2];
+        // 會有「訴更一字」這種字號，在前面被替代成阿拉伯數字了，這邊把他換回來
+        for (var i in map) {
+            if (map[i] !== '') {
+                case_word = case_word.replace(new RegExp(map[i], 'g'), i);
+            }
+        }
         var case_no = matches[3];
         result['裁判字號'] = {
             '年': year,
