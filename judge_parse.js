@@ -260,9 +260,9 @@ var parse_history = function(html){
 var parse_court = function(str){
     var result = {};
     var court_id = null;
+    str = str.replace(/台/g, '臺');
     for (var i = 0; i < court_names.length; i ++) {
         name = court_names[i];
-        name = name.replace(/台/g, '臺');
         if (str.indexOf(name) === 0) {
             court_id = court_name_map[name];
             result['法院'] = {
