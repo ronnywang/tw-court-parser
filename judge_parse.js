@@ -80,10 +80,54 @@ var court = {
     'KSY': '臺灣高雄少年及家事法院',
 };
 
+var simple_court = {
+    'TPE': '臺北簡易庭',
+    'STE': '新店簡易庭',
+    'SLE': '士林簡易庭',
+    'NHE': '內湖簡易庭',
+    'PCE': '板橋簡易庭',
+    'SJE': '三重簡易庭',
+    'TYE': '桃園簡易庭',
+    'CLE': '中壢簡易庭',
+    'SCD': '新竹簡易庭',
+    'CPE': '竹北簡易庭(含竹東)',
+    'MLD': '苗栗簡易庭',
+    'TCE': '臺中簡易庭',
+    'SDE': '沙鹿簡易庭',
+    'FYE': '豐原簡易庭',
+    'CHE': '彰化簡易庭',
+    'OLE': '員林簡易庭',
+    'PDE': '北斗簡易庭',
+    'NTE': '南投簡易庭(含埔里)',
+    'TLE': '斗六簡易庭',
+    'HUE': '虎尾簡易庭',
+    'CYE': '嘉義簡易庭(含朴子)',
+    'PKE': '北港簡易庭',
+    'TNE': '臺南簡易庭',
+    'SYE': '柳營簡易庭',
+    'SSE': '新市簡易庭',
+    'KSE': '高雄簡易庭',
+    'GSE': '岡山簡易庭',
+    'CSE': '旗山簡易庭',
+    'FSE': '鳳山簡易庭',
+    'PTE': '屏東簡易庭',
+    'CCE': '潮州簡易庭',
+    'TTE': '臺東簡易庭',
+    'HLE': '花蓮簡易庭(含鳳林,玉里)',
+    'ILE': '宜蘭簡易庭',
+    'LTE': '羅東簡易庭',
+    'KLD': '基隆、瑞芳簡易庭',
+    'MKE': '馬公簡易庭',
+    'KME': '金城簡易庭',
+};
+
 var court_name_map = {};
 var court_names = [];
 for (var id in court) {
     court_name_map[court[id].replace(/ /g, '')] = id;
+}
+for (var id in simple_court) { // 把簡易庭併進法院中
+    court[id] = simple_court[id];
 }
 court_name_map['臺灣板橋地方法院'] = 'PCD';
 court_name_map['司法院刑事補償法庭'] = 'TPC';
@@ -125,15 +169,47 @@ var to_wiki_infobox = function(result){
   return output;
 };
 
+var empty_result = function(){
+    return {
+        "連結": {},
+        "裁判字號": {},
+        "裁判日期": {},
+        "裁判案由": "",
+        "裁判種類": {},
+        "裁判類別": {},
+        "法院": {},
+        "法官": [],
+        "裁判全文": "",
+    };
+};
+
 var parse_from_print_page = function(html, url){
     var span_dom = $('<span></span>');
     span_dom.html(html);
-    var result = {
-        '連結': {}
-    };
+    var result = empty_result();
     var jcheck;
     var matches = url.match('jcheck=([0-9]*)');
     jcheck = matches[1];
+    result['裁判類別']['jcheck'] = jcheck;
+
+    matches = url.match('v_court=([A-Z]*)');
+    if (matches) {
+        v_court = decodeURIComponent(matches[1]);
+        result['法院'] = {
+            SOURCE: decodeURIComponent(matches[1]),
+            ID: v_court,
+        };
+    }
+
+    matches = url.match('v_sys=([A-Z])');
+    if (matches) {
+        v_sys = decodeURIComponent(matches[1]);
+        result['裁判種類'] = {
+            SOURCE: v_sys,
+            ID: v_sys,
+        };
+    }
+
     var body;
 
     $('span', span_dom).each(function(){
@@ -159,15 +235,13 @@ var parse_from_print_page = function(html, url){
             body = $('pre', span_dom).text();
         }
     });
-    return parse_body(result, body, jcheck);
+    return parse_body(result, body);
 };
 
 var parse_from_page = function(html){
     var span_dom = $('<span></span>');
     span_dom.html(html);
-    var result = {
-        '連結': {}
-    };
+    var result = empty_result();
     var jcheck;
     $('a', span_dom).each(function(){
         if ($(this).text() == '友善列印' && $(this).attr('href').match('jcheck=')) {
@@ -176,6 +250,7 @@ var parse_from_page = function(html){
             return false;
         }
     });
+    result['裁判類別']['jcheck'] = jcheck;
     $('tr', span_dom).each(function(){
         if ($(this).children('td').length == 2) {
             name = $(this).children('td').eq(0).text();
@@ -201,7 +276,7 @@ var parse_from_page = function(html){
             }
         }
     });
-    return parse_body(result, body, jcheck);
+    return parse_body(result, body);
 };
 
 var parse_history = function(html){
@@ -257,26 +332,34 @@ var parse_history = function(html){
     return records;
 };
 
-var parse_court = function(str){
+var parse_court = function(str, old_result){
     var result = {};
     var court_id = null;
-    for (var i = 0; i < court_names.length; i ++) {
-        name = court_names[i];
-        if (str.replace(/台/, '臺').indexOf(name) === 0) {
-            court_id = court_name_map[name];
-            result['法院'] = {
-                SOURCE: name,
-                ID: court_name_map[name],
-            };
-            break;
+    if ('undefined' !== typeof(old_result['法院'].ID)) {
+        court_id = old_result['法院'].ID;
+    } else {
+        for (var i = 0; i < court_names.length; i ++) {
+            name = court_names[i];
+            if (str.replace(/台/, '臺').indexOf(name) === 0) {
+                court_id = court_name_map[name];
+                result['法院'] = {
+                    SOURCE: name,
+                    ID: court_name_map[name],
+                };
+                break;
+            }
+        }
+        if (court_id === null) {
+            throw "找不到對應的法院";
         }
     }
-    if (court_id === null) {
-        throw "找不到對應的法院";
-    }
+
     var matches = str.substring(name.length).match(/^(刑事|民事|行政訴訟|行政)?(簡易判決|判決|裁定|[^ 　]*)(.*)/);
     if (!matches || !matches[1]) {
-        if (court_id == 'TPA' || court_id == 'TPB' || court_id == 'TCB' || court_id == 'KSB') {
+        if ('undefined' !== typeof(old_result['裁判種類'].ID)) {
+            court_type = old_result['裁判種類'].ID;
+            court_type_source = old_result['裁判種類'].SOURCE;
+        } else if (court_id == 'TPA' || court_id == 'TPB' || court_id == 'TCB' || court_id == 'KSB') {
             court_type = 'A';
             court_type_source = '行政訴訟';
         } else if (court_id == 'TPC') {
@@ -330,14 +413,13 @@ var parse_court = function(str){
     return result;
 };
 
-var parse_body = function(result, body, jcheck){
+var parse_body = function(result, body){
     var lines = body.split("\n");
-    court_result = parse_court(lines[0]);
+    court_result = parse_court(lines[0], result);
     for (var i in court_result) {
         if (i == '裁判字號') continue;
         result[i] = court_result[i];
     }
-    result['裁判類別']['jcheck'] = jcheck;
     
     // 處理法院
     result['連結']['歷審案件'] = 'http://jirs.judicial.gov.tw/FJUD/HISTORYSELF.aspx?selectedOwner=H&selectedCrmyy=' + result['裁判字號']['年'] + '&selectedCrmid=' + encodeURIComponent(result['裁判字號']['字']) + '&selectedCrmno=' + result['裁判字號']['號'] + '&selectedCrtid=' + result['法院'].ID;
