@@ -63,14 +63,20 @@ $('#form').submit(function(e){
         $.get(proxy_url, function(text){
             var result;
             $('#message').text('');
-            if ('FJUDQRY03_1' == type) {
-                result = parse_from_page(text);
-            } else if ('PrintFJUD03_0' == type) {
-                result = parse_from_print_page(text, url);
-            } else if ('HISTORYSELF' == type) {
-                result = parse_history(text);
-                $('#textarea').text(JSON.stringify(result, true, 2));
-                $('#wiki-area').hide();
+            try {
+                if ('FJUDQRY03_1' == type) {
+                        result = parse_from_page(text);
+                } else if ('PrintFJUD03_0' == type) {
+                    result = parse_from_print_page(text, url);
+                } else if ('HISTORYSELF' == type) {
+                    result = parse_history(text);
+                    $('#textarea').text(JSON.stringify(result, true, 2));
+                    $('#wiki-area').hide();
+                    return;
+                }
+            } catch (s) {
+                $('#message').text('字號無法判斷: ' + s);
+                throw s;
                 return;
             }
             $('#textarea').text(JSON.stringify(result, true, 2));
