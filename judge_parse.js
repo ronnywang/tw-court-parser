@@ -230,11 +230,11 @@ var parse_from_print_page = function(html, url){
     jcheck = matches[1];
     result['裁判類別']['jcheck'] = jcheck;
 
-    matches = url.match('v_court=([A-Z]*)');
+    matches = url.match('v_court=([A-Z]*)([^&]*)');
     if (matches) {
         v_court = decodeURIComponent(matches[1]);
         result['法院'] = {
-            SOURCE: decodeURIComponent(matches[1]),
+            SOURCE: decodeURIComponent(matches[1] + matches[2]),
             ID: v_court,
         };
     }
