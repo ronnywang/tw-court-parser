@@ -37,7 +37,7 @@ $('#form').submit(function(e){
             var type = 'FJUDQRY03_1';
         } else if (!url.match('^http')) {
             try {
-                var result = parse_court(url);
+                var result = parse_court(url, empty_result());
             } catch (s) {
                 $('#message').text('字號無法判斷: ' + s);
                 return;
