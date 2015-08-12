@@ -460,7 +460,7 @@ var parse_body = function(result, body){
     }
     
     // 處理法院
-    result['連結']['歷審案件'] = 'http://jirs.judicial.gov.tw/FJUD/HISTORYSELF.aspx?selectedOwner=H&selectedCrmyy=' + result['裁判字號']['年'] + '&selectedCrmid=' + encodeURIComponent(result['裁判字號']['字']) + '&selectedCrmno=' + result['裁判字號']['號'] + '&selectedCrtid=' + result['法院'].ID;
+    result['連結']['歷審案件'] = 'http://jirs.judicial.gov.tw/FJUD/HISTORYSELF.aspx?selectedOwner=' +result['裁判種類'].ID + '&selectedCrmyy=' + result['裁判字號']['年'] + '&selectedCrmid=' + encodeURIComponent(result['裁判字號']['字']) + '&selectedCrmno=' + result['裁判字號']['號'] + '&selectedCrtid=' + result['法院'].ID;
     result['連結']['列表'] = 'http://jirs.judicial.gov.tw/FJUD/FJUDQRY02_1.aspx?cw=1&v_court=' + encodeURIComponent(result['法院'].ID + ' ' + court[result['法院'].ID]) + '&v_sys=' + result['裁判種類'].ID + '&jud_year=' + result['裁判字號']['年'] + '&jud_case=' + encodeURIComponent(result['裁判字號']['字']) + '&jud_no=' + result['裁判字號']['號'] + '&jud_title=&keyword=&sdate=19110101&edate=99991231&searchkw=';
     result['連結']['列表短網址'] = 'http://judicial.ronny.tw/' + encodeURIComponent(result['法院'].ID) + '/' + result['裁判種類'].ID + '/' + result['裁判字號']['年'] + '/' + encodeURIComponent(result['裁判字號']['字']) + '/' + result['裁判字號']['號'];
 
